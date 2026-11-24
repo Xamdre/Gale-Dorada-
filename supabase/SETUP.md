@@ -1,44 +1,71 @@
-# Gale Dorada — configuración de Supabase
+# Gale Dorada — conectar la base de datos
 
-## Qué incluye el esquema
+El repositorio ya incluye el frontend, el panel de administración y el esquema SQL. Para que la tienda guarde productos hace falta crear un **proyecto de base de datos** en Supabase. Iniciar sesión con GitHub o vincular el repositorio no crea por sí solo esa base de datos.
 
-El archivo `supabase/schema.sql` crea:
+## 1. Crear el proyecto Supabase
 
-- Perfiles y roles (`customer` / `admin`).
-- Categorías.
-- Productos con precio en COP, SKU, inventario, estado y destacado.
-- Varias imágenes por producto.
-- Bucket `product-images` para las fotos.
-- Políticas RLS: visitantes solo leen productos publicados; únicamente administradores autenticados pueden crear, editar o eliminar productos, categorías e imágenes.
+1. Entra en https://supabase.com/dashboard.
+2. Pulsa **New project**.
+3. Elige una organización, escribe `gale-dorada` como nombre y selecciona el plan Free.
+4. Crea una contraseña fuerte para la base de datos y guárdala en un gestor seguro. No la compartas en el chat.
+5. Elige la región disponible más cercana a Colombia y crea el proyecto.
+6. Espera a que el proyecto termine de aprovisionarse.
 
-## Configuración inicial
+## 2. Crear tablas, permisos y almacenamiento
 
-1. Crea un proyecto en Supabase.
-2. Abre **SQL Editor**, pega el contenido de `supabase/schema.sql` y ejecútalo.
-3. En **Authentication → Users**, crea tu usuario administrador.
-4. Copia el UUID de ese usuario y ejecuta en SQL Editor:
+1. Abre **SQL Editor → New query**.
+2. Abre el archivo `supabase/schema.sql` de este repositorio.
+3. Copia todo su contenido, pégalo en SQL Editor y pulsa **Run**.
+4. Comprueba que la consulta termine sin errores.
+
+Esto crea perfiles, roles, categorías, productos, imágenes, pedidos, detalle de pedidos, reglas RLS y el bucket de imágenes. Los visitantes solo pueden consultar productos publicados; las escrituras requieren rol administrador.
+
+## 3. Crear tu usuario administrador
+
+1. En Supabase abre **Authentication → Users → Add user**.
+2. Crea tu usuario con el correo y contraseña que usarás para entrar al panel.
+3. Abre el usuario creado y copia su **User UID**.
+4. En SQL Editor ejecuta esta consulta sustituyendo el texto por tu UID:
 
 ```sql
 update public.profiles
 set role = 'admin'
-where id = 'PEGA-AQUI-EL-UUID-DEL-USUARIO';
+where id = 'PEGA-AQUI-EL-USER-UID';
 ```
 
-5. En la configuración de API del proyecto, guarda la Project URL y la clave publicable (anon/publishable) para conectarlas al frontend.
+No compartas la contraseña de Supabase ni la contraseña de tu usuario.
 
-**Seguridad:** nunca pongas la clave `service_role` o una secret key en el navegador, en el repositorio ni en variables `NEXT_PUBLIC_*`. El acceso de escritura se controla con autenticación y RLS.
+## 4. Conectar el proyecto al frontend
 
-## Modelo de producto
+En Supabase abre **Project Settings → API** (o **Connect**, según la versión del panel) y copia:
 
-Cada producto tiene nombre, slug, SKU opcional, descripción corta y larga, precio en pesos colombianos, precio anterior opcional, existencias, categoría, estado (`draft`, `published`, `archived`) y opción de destacado. Las imágenes se guardan en Storage y sus rutas en `product_images`.
+- **Project URL**
+- **Publishable key** (o la clave heredada `anon/public`)
 
-## Próxima integración
+En el proveedor donde despliegues la web, agrega estas variables de entorno:
 
-El frontend debe conectar Supabase para:
-- Mostrar en la tienda solo productos publicados.
-- Incorporar inicio de sesión de administración.
-- Crear, editar, publicar, archivar y eliminar productos.
-- Subir y ordenar fotografías.
-- Gestionar categorías e inventario.
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://TU-PROYECTO.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=TU_CLAVE_PUBLICABLE
+```
 
-La interfaz no debe permitir que un usuario visitante escriba directamente en las tablas. Las políticas RLS siguen siendo la barrera de seguridad, incluso si alguien intenta llamar la API por fuera de la página.
+Para desarrollo local, copia `.env.example` como `.env.local` y completa esas dos variables. No subas `.env.local` a GitHub.
+
+**Nunca** pongas una `service_role`, `sb_secret` o clave privada en una variable `NEXT_PUBLIC_*`, en el navegador o en GitHub. El frontend no necesita una clave secreta para gestionar productos: Supabase Auth y RLS aplican los permisos.
+
+## 5. Entrar al panel
+
+Cuando las variables estén configuradas y la web se haya desplegado de nuevo, abre:
+
+`/admin/login`
+
+Inicia sesión con el usuario administrador. Desde el panel podrás crear, editar, publicar, ocultar y eliminar productos, cambiar precios e inventario y subir fotografías.
+
+## Estado de funciones
+
+- Catálogo público conectado a productos publicados.
+- Panel privado con acceso basado en el rol de `profiles`.
+- Gestión de productos, precios, inventario, publicación e imágenes.
+- Vista administrativa de pedidos preparada; el checkout y la pasarela de pago todavía no están habilitados.
+
+La integración de pagos, cobros o datos comerciales debe configurarse después y con supervisión de un adulto responsable cuando corresponda. El plan gratuito es suficiente para pruebas iniciales, pero tiene límites de uso y no debe asumirse como capacidad ilimitada para una tienda en producción.
