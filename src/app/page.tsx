@@ -19,7 +19,7 @@ export default function Home() {
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
   const subtotal = products.reduce((sum, p) => sum + p.price * (cart[p.id] || 0), 0);
   const add = (id: string) => { const product = products.find(p => p.id === id); if (!product) return; setCart(c => ({ ...c, [id]: Math.min(product.stock, (c[id] || 0) + 1) })); };
-  const change = (id: string, delta: number) => setCart(c => { const n = (c[id] || 0) + delta; const next = { ...c }; if (n <= 0) delete next[id]; else next[id] = n; return next; });
+  const change = (id: string, delta: number) => setCart(c => { const product = products.find(p => p.id === id); const n = Math.min(product?.stock ?? 0, (c[id] || 0) + delta); const next = { ...c }; if (n <= 0) delete next[id]; else next[id] = n; return next; });
 
   return <main>
     <div className="announcement">UN DETALLE ESPECIAL PUEDE CAMBIAR TODO · GALE DORADA</div>
