@@ -19,15 +19,20 @@ export async function middleware(request: NextRequest) {
   });
 
   const { data: { user } } = await supabase.auth.getUser();
+  let isAdmin = false;
+  if (user) {
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle();
+    isAdmin = profile?.role === "admin";
+  }
+
   const isLogin = request.nextUrl.pathname === "/admin/login";
-  const isAdmin = user?.app_metadata?.role === "admin";
   if (!isLogin && (!user || !isAdmin)) {
     const destination = request.nextUrl.clone();
     destination.pathname = "/admin/login";
     destination.search = "";
     return NextResponse.redirect(destination);
   }
-  if (isLogin && isAdmin) {
+  if (isLogin && user && isAdmin) {
     const destination = request.nextUrl.clone();
     destination.pathname = "/admin";
     destination.search = "";
