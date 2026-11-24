@@ -3,16 +3,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Menu, Search, ShoppingBag, Sparkles, Heart, ShieldCheck, X, Plus, Minus, Trash2 } from "lucide-react";
 
-type Product = { id: number; name: string; category: string; price: number; description: string; tone: string; symbol: string };
-const products: Product[] = [];
+type Product = { id: string; name: string; category: string; price: number; description: string; tone: string; symbol: string; image_url: string | null };
 const money = (n: number) => new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n);
 
 export default function Home() {
-  const [products, setProducts] = useState<Product[]>([]);\n  const [cart, setCart] = useState<Record<string, number>>({});
+  const [products, setProducts] = useState<Product[]>([]);
+  const [cart, setCart] = useState<Record<string, number>>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
-  useEffect(() => { fetch("/api/products").then(r => r.ok ? r.json() : Promise.reject()).then(data => setProducts(data.products || [])).catch(() => setProducts([])); }, []);\n  useEffect(() => { try { const saved = localStorage.getItem("gale-dorada-cart"); if (saved) setCart(JSON.parse(saved)); } catch { localStorage.removeItem("gale-dorada-cart"); } }, []);
+  useEffect(() => { fetch("/api/products").then(r => r.ok ? r.json() : Promise.reject()).then(data => setProducts(data.products || [])).catch(() => setProducts([])); }, []);
+  useEffect(() => { try { const saved = localStorage.getItem("gale-dorada-cart"); if (saved) setCart(JSON.parse(saved)); } catch { localStorage.removeItem("gale-dorada-cart"); } }, []);
   useEffect(() => { localStorage.setItem("gale-dorada-cart", JSON.stringify(cart)); }, [cart]);
   const filtered = useMemo(() => products.filter(p => (p.name + " " + p.category).toLowerCase().includes(query.toLowerCase())), [query]);
   const count = Object.values(cart).reduce((a, b) => a + b, 0);
