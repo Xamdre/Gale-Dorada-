@@ -42,7 +42,9 @@ export default function AdminDashboard() {
       const client=createClient(); setSupabase(client);
       client.auth.getUser().then(async ({data,error:authError})=>{
         if(!active)return;
-        if(authError||!data.user||data.user.app_metadata?.role!=="admin"){router.replace("/admin/login");return;}
+        if(authError||!data.user){router.replace("/admin/login");return;}
+        const {data:profile,error:profileError}=await client.from("profiles").select("role").eq("id",data.user.id).single();
+        if(profileError||profile?.role!=="admin"){await client.auth.signOut();router.replace("/admin/login");return;}
         try{await load(client);}catch(e){setError(e instanceof Error?e.message:"No se pudieron cargar los datos.");}
         finally{if(active)setLoading(false);}
       });
