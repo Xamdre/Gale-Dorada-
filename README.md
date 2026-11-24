@@ -2,25 +2,38 @@
 
 Tienda en línea construida con Next.js, TypeScript y Supabase.
 
-## Activar catálogo y administración
+## Configuración inicial
 
-1. Crea un proyecto en Supabase.
-2. Ejecuta `supabase/migrations/202611240001_initial_store.sql` en el SQL Editor.
-3. Invita tu usuario administrador en Supabase Authentication y asígnale en **App Metadata** el valor `{ "role": "admin" }`. No uses User Metadata para este permiso.
-4. Configura `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` en Render usando Project Settings → API.
-5. Espera el despliegue automático. El catálogo público mostrará únicamente productos activos y el panel estará en `/admin`.
+Sigue la guía completa en [supabase/SETUP.md](supabase/SETUP.md). En resumen:
 
-El panel permite crear, editar, publicar, destacar y eliminar productos, cargar imágenes y administrar estados de pedidos. Las políticas RLS restringen las operaciones privadas al usuario con rol admin.
+1. Crea un proyecto de Supabase (iniciar sesión o vincular GitHub no crea automáticamente la base de datos).
+2. Ejecuta el contenido de `supabase/schema.sql` en Supabase → SQL Editor.
+3. Crea un usuario en Authentication → Users.
+4. Asigna el rol administrador en SQL Editor:
+   ```sql
+   update public.profiles set role = 'admin' where id = 'UUID_DEL_USUARIO';
+   ```
+5. Configura `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_ANON_KEY` en el hosting y vuelve a desplegar.
 
-## Seguridad y funciones aún pendientes
+## Funciones implementadas
 
-La creación de pedidos y la confirmación de pagos deben pasar por endpoints de servidor que verifiquen eventos de Wompi. No se habilitan escrituras públicas directas de pedidos. La integración de Wompi, sincronización de Google Calendar, cálculo real de envíos y dominio propio requieren credenciales/configuración del propietario antes de producción.
+- Tienda pública con catálogo dinámico, búsqueda y carrito local.
+- Panel privado en `/admin`, protegido con Supabase Auth y rol almacenado en `profiles`.
+- Crear, editar, publicar, ocultar y eliminar productos.
+- Precio en COP, categoría, existencias, fotografía y destacado.
+- Almacenamiento de imágenes en Supabase Storage.
+- Estructura de pedidos y vista administrativa preparada.
 
-Consulta `.env.example` para las variables previstas. Nunca publiques claves privadas ni `SUPABASE_SERVICE_ROLE_KEY` en el navegador o en GitHub.
+## Pendiente antes de vender
 
-## Desarrollo
+El carrito todavía no crea pedidos ni procesa pagos. Wompi, cálculo de envíos, notificaciones, dominio propio y otras integraciones comerciales deben configurarse y probarse antes de aceptar compras reales. Los pagos y la información comercial deben gestionarse con supervisión de un adulto responsable cuando corresponda.
+
+Nunca publiques claves privadas, `service_role` o `sb_secret` en GitHub ni en variables `NEXT_PUBLIC_*`. La clave pública del proyecto se protege con las políticas RLS incluidas en el esquema.
+
+## Desarrollo local
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
